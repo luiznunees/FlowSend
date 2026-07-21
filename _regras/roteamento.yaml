@@ -1,0 +1,12 @@
+regras:
+  - escopo: "roteamento de disparo"
+    regra: "Um contato vinculado ao Chip 1 sempre deve ser disparado pelo Chip 1. O vínculo inicial nunca pode ser alterado automaticamente."
+    severidade: "obrigatória"
+
+  - escopo: "roteamento de disparo"
+    regra: "Contatos sem vínculo prévio devem ser distribuídos entre os chips disponíveis de forma equilibrada."
+    severidade: "obrigatória"
+
+  - escopo: "roteamento de disparo"
+    regra: "Um contato sem vínculo pode ser atribuído manualmente pelo usuário."
+    severidade: "obrigatória"

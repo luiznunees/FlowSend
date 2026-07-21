@@ -1,0 +1,16 @@
+regras:
+  - escopo: "disparo de mensagens"
+    regra: "Respeitar o intervalo configurado entre disparos (padrão 30 segundos)."
+    severidade: "obrigatória"
+
+  - escopo: "disparo de mensagens"
+    regra: "Nunca disparar para o mesmo contato mais de uma vez por campanha."
+    severidade: "obrigatória"
+
+  - escopo: "disparo de mensagens"
+    regra: "Registrar resultado de cada disparo (sucesso/falha/motivo) em logs/"
+    severidade: "obrigatória"
+
+  - escopo: "disparo de mensagens"
+    regra: "Se um chip falhar (ex: chip desconectado), pausar a campanha e avisar o usuário antes de continuar."
+    severidade: "obrigatória"
