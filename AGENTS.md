@@ -6,9 +6,23 @@
 
 ⚠️ REGRA #3: NUNCA crie informação fictícia. Se não tiver o dado, pergunte. Não invente números, nomes, datas, contatos, valor, nada.
 
-FlowSend gerencia disparos com roteamento entre chips. Extrai contatos de PDFs, gerencia listas, cria campanhas e dispara com consistência — um contato vinculado ao Chip 1 sempre pelo Chip 1.
+## Bootstrap (primeira vez)
 
-Skills globais em `~/.config/opencode/skills/`, dados do projeto na pasta atual.
+```
+git clone https://github.com/luiznunees/FlowSend.git
+cd FlowSend
+opencode
+```
+
+Dentro do OpenCode, rode **/instalar** — ele instala globalmente, pergunta cada detalhe e configura tudo. Depois dessa primeira vez, nunca mais precisa clonar.
+
+## Uso normal (segunda vez em diante)
+
+Crie uma pasta vazia para o projeto, abra o OpenCode, e as skills já estão disponíveis (instalação global). Rode /instalar para configurar aquele projeto.
+
+---
+
+FlowSend gerencia disparos com roteamento entre chips. Extrai contatos de PDFs, gerencia listas, cria campanhas e dispara com consistência — um contato vinculado ao Chip 1 sempre pelo Chip 1.
 
 ---
 
