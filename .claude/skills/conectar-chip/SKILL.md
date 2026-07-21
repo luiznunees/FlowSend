@@ -37,7 +37,7 @@ Perguntar: "Qual chip quer conectar?"
 Chamar Evolution API para ver se a instância já existe:
 
 ```bash
-curl -s -X GET "<URL>/instance/fetchInstances"
+curl -s -X GET "<URL>/instance/fetchInstances" -H "apiKey: <API_KEY>"
 ```
 
 Se já existir e estiver conectada (`connectionState: "open"`):
@@ -49,7 +49,7 @@ Se existir mas estiver desconectada:
 Se não existir, criar:
 
 ```bash
-curl -s -X POST "<URL>/instance/create" \
+curl -s -X POST "<URL>/instance/create" -H "apiKey: <API_KEY>" \
   -H "Content-Type: application/json" \
   -d '{"instanceName": "<instancia>"}'
 ```
@@ -59,7 +59,7 @@ curl -s -X POST "<URL>/instance/create" \
 ### Passo 3 — Gerar QR Code
 
 ```bash
-curl -s -X GET "<URL>/instance/qrcode/<instancia>?base64=true"
+curl -s -X GET "<URL>/instance/qrcode/<instancia>?base64=true" -H "apiKey: <API_KEY>"
 ```
 
 Mostrar o QR Code (imagem base64) OU exibir instrução:
@@ -76,7 +76,7 @@ Mostrar o QR Code (imagem base64) OU exibir instrução:
 Verificar status:
 
 ```bash
-curl -s -X GET "<URL>/instance/connectionState/<instancia>"
+curl -s -X GET "<URL>/instance/connectionState/<instancia>" -H "apiKey: <API_KEY>"
 ```
 
 Se `connectionState: "open"`:

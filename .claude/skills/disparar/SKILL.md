@@ -22,7 +22,8 @@ description: >
 ### Passo 1 â€” Carregar config
 
 Ler `_memoria/config.yaml` para obter:
-- `evolution_api.url`
+- `evolution_api.url` — URL do servidor Evolution API
+- `evolution_api.api_key` — chave de autenticação
 - `chips` (id, nome, instancia)
 - `intervalo_segundos`
 
@@ -33,7 +34,7 @@ Ler `_memoria/config.yaml` para obter:
 Para cada chip que vai ser usado, verificar se estÃ¡ conectado:
 
 ```bash
-curl -s -X GET "<URL>/instance/connectionState/<instancia>"
+curl -s -X GET "<URL>/instance/connectionState/<instancia>" -H "apiKey: <API_KEY>"
 ```
 
 Se alguma estiver desconectada:
@@ -79,7 +80,7 @@ Para cada contato na lista:
 
 **Enviar via Evolution API:**
 ```bash
-curl -s -X POST "<URL>/message/sendText/<instancia>" \
+curl -s -X POST "<URL>/message/sendText/<instancia>" -H "apiKey: <API_KEY>" \
   -H "Content-Type: application/json" \
   -d '{"number": "55XXXXXXXXXXX", "text": "[mensagem]", "delay": 1}'
 ```

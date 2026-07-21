@@ -24,7 +24,7 @@ Ler `_memoria/config.yaml`.
 
 Verificar conexão com Evolution API:
 ```bash
-curl -s -o /dev/null -w "%{http_code}" "<URL>/"
+curl -s -o /dev/null -w "%{http_code}" "<URL>/" -H "apiKey: <API_KEY>"
 ```
 Se não for 200: "Evolution API não está respondendo em [URL]. Verifique se o servidor está ligado."
 
@@ -34,7 +34,7 @@ Se não for 200: "Evolution API não está respondendo em [URL]. Verifique se o 
 
 Para cada chip, chamar:
 ```bash
-curl -s -X GET "<URL>/instance/connectionState/<instancia>"
+curl -s -X GET "<URL>/instance/connectionState/<instancia>" -H "apiKey: <API_KEY>"
 ```
 
 Mapear resultado:

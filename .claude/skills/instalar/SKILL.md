@@ -41,8 +41,8 @@ Salvar em `_memoria/config.yaml`:
 
 ```yaml
 evolution_api:
-  url: "http://localhost:8080"
-  api_key: ""  # opcional
+  url: "https://apps-evolution-api.mnfvp3.easypanel.host"
+  api_key: "429683C4C977415CAAFCCE10F7D57E11"
 chips:
   - id: 1
     nome: "Chip 1"
