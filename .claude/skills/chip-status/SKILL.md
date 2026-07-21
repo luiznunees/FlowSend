@@ -1,15 +1,16 @@
 ---
 name: chip-status
 description: >
-  Mostra o status atual dos chips: quantos contatos vinculados a cada um,
-  quantos disparos foram feitos por chip, contatos sem vínculo, logs recentes.
-  Use quando o usuário disser "status dos chips", "ver chips", "como estão os chips", "/chip-status".
+  Mostra status dos chips via Evolution API: conexão, contatos vinculados, disparos do dia,
+  logs recentes. Verifica se cada instância está online.
+  Use quando o usuário disser "status dos chips", "ver chips", "/chip-status".
 ---
 
-# /chip-status — Status dos chips
+# /chip-status — Status dos chips via Evolution API
 
 ## Dependências
 
+- `_memoria/config.yaml` — URL + instâncias
 - `dados/contatos/vinculos.csv` — vínculos contato↔chip
 - `logs/` — histórico de disparos
 
@@ -17,47 +18,62 @@ description: >
 
 ## Workflow
 
-### Passo 1 — Carregar dados
+### Passo 1 — Carregar config e verificar Evolution API
 
-Ler `dados/contatos/vinculos.csv` (se existir) e logs recentes em `logs/`.
+Ler `_memoria/config.yaml`.
+
+Verificar conexão com Evolution API:
+```bash
+curl -s -o /dev/null -w "%{http_code}" "<URL>/"
+```
+Se não for 200: "Evolution API não está respondendo em [URL]. Verifique se o servidor está ligado."
 
 ---
 
-### Passo 2 — Montar painel
+### Passo 2 — Verificar cada instância
+
+Para cada chip, chamar:
+```bash
+curl -s -X GET "<URL>/instance/connectionState/<instancia>"
+```
+
+Mapear resultado:
+- `"connectionState": "open"` → ? Conectado
+- `"connectionState": "close"` ou `"connecting"` → ? Desconectado
+- 404 → Instância não encontrada (nunca foi criada)
+
+---
+
+### Passo 3 — Montar painel
 
 ```markdown
 # Status dos Chips — [data]
 
-## Resumo
-| Chip | Contatos vinculados | Total disparos hoje | Último disparo |
-|------|--------------------|--------------------|----------------|
-| Chip 1 | [N] | [N] | [hora] |
-| Chip 2 | [N] | [N] | [hora] |
-| **Total** | **[N]** | **[N]** | |
+## Evolution API
+? [URL] — Online
+
+## Chips
+| Chip | Instância | Conexão | Contatos | Disparos hoje | Último disparo |
+|------|-----------|---------|----------|---------------|----------------|
+| Chip 1 | chip1 | ? Conectado | [N] | [N] | [hora] |
+| Chip 2 | chip2 | ? Desconectado | [N] | [N] | [hora] |
 
 - Contatos sem chip: [N]
-- Total de campanhas já executadas: [N]
-
-## Distribuição
-[gráfico textual ou proporção]
-
-## Últimos logs
-[últimas 5 linhas do log mais recente]
+- Total de campanhas executadas: [N]
 ```
 
 ---
 
-### Passo 3 — Alertas
+### Passo 4 — Alertas
 
-Identificar:
-- Chips com muita diferença de carga (ex: Chip 1 com 500, Chip 2 com 50) → sugerir distribuir próximos contatos sem chip pro mais vazio
-- Chips sem disparo há mais de 7 dias
-- Logs com taxa de erro alta (>10%)
+- Instância desconectada → "Chip [N] está desconectado. /conectar-chip"
+- Taxa de erro > 10% nos logs recentes → alerta vermelho
+- Chip muito sobrecarregado vs outro vazio → sugere redistribuir
 
 ---
 
-### Passo 4 — Sugestões
+### Passo 5 — Sugestões
 
-Baseado no painel:
-- "Chip 2 está com poucos contatos. Quer direcionar os próximos pra ele?"
-- "Taxa de erro alta no Chip 1. Quer verificar se ele está conectado?"
+- "Evolution API não responde — verificar se o Docker está rodando"
+- "Chip [N] desconectado — rodar /conectar-chip"
+- "Chip [N] com taxa de erro alta — verificar número dos contatos"

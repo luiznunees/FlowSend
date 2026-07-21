@@ -53,8 +53,9 @@ FlowSend/
 - `extrair-pdf` — Extrai telefones de PDFs e salva como CSV
 - `contatos` — Gerencia listas, dedup, vincula chips
 - `campanha` — Cria campanha com template e lista alvo
-- `disparar` — Executa disparo respeitando roteamento
-- `chip-status` — Mostra status dos chips e vínculos
+- `disparar` — Executa disparo via Evolution API respeitando roteamento
+- `chip-status` — Mostra status dos chips via Evolution API
+- `conectar-chip` — Conecta chip à Evolution API via QR Code
 - `instalar` — Configuração inicial do FlowSend
 
 ---

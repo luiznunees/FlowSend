@@ -1,26 +1,47 @@
 ---
 name: disparar
 description: >
-  Executa o disparo de uma campanha. Lê a lista de contatos, aplica roteamento por chip
-  (respeitando vínculos), envia mensagens com intervalo configurado, e registra resultados
-  em logs/. Exibe progresso em tempo real. Use quando o usuário disser "disparar", "executar
-  campanha", "enviar mensagens", "/disparar".
+  Executa o disparo de uma campanha via Evolution API. Lê contatos, aplica roteamento
+  por chip (consistência de vínculo), envia mensagens com intervalo, registra resultados.
+  Use quando o usuário disser "disparar", "executar campanha", "enviar mensagens", "/disparar".
 ---
 
-# /disparar — Execução de disparo
+# /disparar — Execução de disparo via Evolution API
 
 ## Dependências
 
+- `_memoria/config.yaml` — URL da Evolution API + instâncias
 - Campanha criada em `campanhas/`
 - Lista de contatos em `dados/contatos/`
 - Vínculos em `dados/contatos/vinculos.csv`
-- Intervalo configurado (padrão: 30s entre mensagens)
 
 ---
 
 ## Workflow
 
-### Passo 1 — Selecionar campanha
+### Passo 1 — Carregar config
+
+Ler `_memoria/config.yaml` para obter:
+- `evolution_api.url`
+- `chips` (id, nome, instancia)
+- `intervalo_segundos`
+
+---
+
+### Passo 2 — Verificar instâncias
+
+Para cada chip que vai ser usado, verificar se está conectado:
+
+```bash
+curl -s -X GET "<URL>/instance/connectionState/<instancia>"
+```
+
+Se alguma estiver desconectada:
+> "O Chip [N] está desconectado. Quer conectar com /conectar-chip ou pular os contatos desse chip?"
+
+---
+
+### Passo 3 — Selecionar campanha
 
 Listar campanhas com status "Criada — aguardando disparo" em `campanhas/`.
 
@@ -28,77 +49,84 @@ Listar campanhas com status "Criada — aguardando disparo" em `campanhas/`.
 
 ---
 
-### Passo 2 — Revisão final
-
-Mostrar resumo:
+### Passo 4 — Revisão final
 
 ```
 Campanha: [nome]
 Contatos: [N]
-Chip 1: [N] contatos
-Chip 2: [N] contatos
-Sem chip: [N] (serão distribuídos)
+  Chip 1 (<instancia>): [N] contatos — ? conectado
+  Chip 2 (<instancia>): [N] contatos — ? conectado
+  Sem chip: [N] (distribuir)
 Intervalo: [N]s
-Tempo estimado: [calcular: N contatos x intervalo / 60 = minutos]
+Tempo estimado: [calcular]
 
 Confirmar disparo? (sim/nao)
 ```
 
 ---
 
-### Passo 3 — Disparar
+### Passo 5 — Disparar
 
 Para cada contato na lista:
 
-1. **Verificar chip**:
-   - Se tem vínculo em `vinculos.csv` → usar o chip registrado
-   - Se não tem → atribuir ao chip com menos contatos no momento → registrar em `vinculos.csv`
+**Verificar chip:**
+- Se tem vínculo em `vinculos.csv` → usar chip registrado
+- Se não → atribuir chip com menos contatos → registrar
 
-2. **Preparar mensagem**:
-   - Substituir variáveis (`{nome}`, `{empresa}`)
-   - Personalizar se houver dados do contato
+**Preparar mensagem:**
+- Substituir variáveis (`{nome}`, `{empresa}`)
+- Garantir que o número esteja no formato `55XXXXXXXXXXX`
 
-3. **Enviar**:
-   - Usar ferramenta adequada para o chip (bash com script de envio, ou API)
-   - Aguardar intervalo configurado
-
-4. **Registrar** em `logs/<campanha>-<YYYYMMDDHHmm>.csv`:
-
-```csv
-telefone,chip,status,data_hora,erro
-55XXXXXXXXXXX,1,sucesso,2026-07-21T10:00:00,
-55XXXXXXXXXXX,2,sucesso,2026-07-21T10:00:30,
-55XXXXXXXXXXX,1,erro,2026-07-21T10:01:00,chip_desconectado
+**Enviar via Evolution API:**
+```bash
+curl -s -X POST "<URL>/message/sendText/<instancia>" \
+  -H "Content-Type: application/json" \
+  -d '{"number": "55XXXXXXXXXXX", "text": "[mensagem]", "delay": 1}'
 ```
 
-5. **Exibir progresso**: `[N/N] enviados — [N] sucesso, [N] falha`
+Capturar resposta:
+- `{"status": "success"}` ou `{"status": 200}` → sucesso
+- Qualquer erro → falha
+
+**Aguardar** `intervalo_segundos`.
+
+**Registrar** em `logs/<campanha>-<YYYYMMDDHHmm>.csv`:
+```csv
+telefone,instancia,chip_id,status,data_hora,erro
+55XXXXXXXXXXX,chip1,1,sucesso,2026-07-21T10:00:00,
+55XXXXXXXXXXX,chip2,2,erro,2026-07-21T10:00:30,instance_disconnected
+```
+
+**Exibir progresso:** `[N/N] — [N] ok, [N] falha`
 
 ---
 
-### Passo 4 — Tratamento de erro
+### Passo 6 — Tratamento de erro
 
-Se um chip falhar:
-- Pausar os disparos desse chip
-- Tentar novamente 1 vez após 60s
-- Se falhar de novo: "O Chip [N] apresentou erro. Deseja pausar a campanha, pular os contatos desse chip ou tentar com outro chip?"
+| Erro | Ação |
+|------|------|
+| `instance_disconnected` | Pausar chip, avisar, perguntar se quer pular contatos desse chip |
+| `number_not_registered` | Registrar como falha, pular, continuar |
+| `timeout` | Tentar 1x após 30s, se falhar: pular |
+| Qualquer outro | Registrar erro, pular, continuar |
 
 **Nunca** redirecionar contato vinculado para outro chip sem permissão explícita.
 
 ---
 
-### Passo 5 — Finalização
-
-Quando todos os contatos forem processados:
+### Passo 7 — Finalização
 
 ```
 ? Campanha [nome] finalizada
 
-Total: [N]
+Total: [N] enviados
 Sucesso: [N]
 Falha: [N]
 Tempo total: [N] min
-Chip 1: [N] disparos
-Chip 2: [N] disparos
+
+Por chip:
+  Chip 1 (<instancia>): [N] disparos
+  Chip 2 (<instancia>): [N] disparos
 
 Log salvo em: logs/<campanha>-<data>.csv
 ```
