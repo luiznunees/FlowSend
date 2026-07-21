@@ -6,19 +6,35 @@
 
 ⚠️ REGRA #3: NUNCA crie informação fictícia. Se não tiver o dado, pergunte. Não invente números, nomes, datas, contatos, valor, nada.
 
-## Bootstrap (primeira vez)
+## Bootstrap — um comando só
 
-```
-git clone https://github.com/luiznunees/FlowSend.git
-cd FlowSend
-opencode
+**Windows (PowerShell):**
+```powershell
+irm https://raw.githubusercontent.com/luiznunees/FlowSend/main/bootstrap.ps1 | iex
 ```
 
-Dentro do OpenCode, rode **/instalar** — ele instala globalmente, pergunta cada detalhe e configura tudo. Depois dessa primeira vez, nunca mais precisa clonar.
+**Linux/Mac:**
+```bash
+bash <(curl -s https://raw.githubusercontent.com/luiznunees/FlowSend/main/bootstrap.sh)
+```
+
+Depois disso, abra o OpenCode em QUALQUER pasta e diga `/instalar` — ele pergunta cada detalhe e configura.
 
 ## Uso normal (segunda vez em diante)
 
-Crie uma pasta vazia para o projeto, abra o OpenCode, e as skills já estão disponíveis (instalação global). Rode /instalar para configurar aquele projeto.
+Crie uma pasta vazia, abra o OpenCode, e as skills já estão disponíveis (instalação global). Rode `/instalar` para configurar o projeto.
+
+---
+
+## Agente como concierge
+
+O usuário pode falar de forma solta, como:
+- "faz o flow" → instalar FlowSend, entender o que precisa
+- "quero disparar mensagens" → guiar passo a passo
+- "faz o instalar" → executar /instalar
+- Qualquer comando "faz <coisa>" → executar a skill correspondente
+
+O agente DEVE guiar o usuário perguntando cada detalhe e informando os próximos passos.
 
 ---
 
