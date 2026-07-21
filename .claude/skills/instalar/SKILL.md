@@ -57,7 +57,19 @@ pasta_entrada: "dados/importados/"
 ### 6. Estrutura inicial
 Criar pastas se não existirem.
 
-### 7. Resumo
+### 7. Instalação global (opcional)
+
+"Quer instalar o FlowSend globalmente? Assim você usa em qualquer pasta sem clonar de novo."
+
+Se sim:
+```bash
+chmod +x install-global.sh
+./install-global.sh
+```
+
+Isso copia os skills para `~/.config/opencode/skills/`. Daí em diante, todo projeto novo é só criar uma pasta vazia e abrir o OpenCode — as skills já estão lá.
+
+### 8. Resumo
 ```
 ? FlowSend configurado!
 

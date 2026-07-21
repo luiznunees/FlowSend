@@ -2,18 +2,11 @@
 name: extrair-pdf
 description: >
   Extrai números de telefone de arquivos PDF. Lê todos os PDFs em dados/importados/,
-  aplica regex para telefones brasileiros (com e sem DDD, com e sem formatação),
-  remove duplicatas dentro do mesmo arquivo, e salva como CSV em dados/contatos/.
-  Use quando o usuário disser "extrair pdf", "extrair números", "tirar contatos dos pdfs", "/extrair-pdf".
+  aplica regex para telefones brasileiros, remove duplicatas, salva como CSV.
+  Use quando: "extrair pdf", "extrair números", "tirar contatos dos pdfs", "/extrair-pdf".
 ---
 
 # /extrair-pdf — Extração de contatos de PDF
-
-## Dependências
-
-- Arquivos PDF em `dados/importados/` OU caminho informado pelo usuário
-
----
 
 ## Workflow
 
@@ -21,9 +14,8 @@ description: >
 
 Listar arquivos em `dados/importados/` com extensão `.pdf`.
 
-Se não houver nenhum, perguntar: "Onde estão os PDFs? Pode colar o caminho ou arrastar os arquivos pra cá que eu leio."
-
-Se houver mais de 5 PDFs, perguntar: "Quer extrair todos de uma vez ou um por um?"
+- Se não houver nenhum: "Onde estão os PDFs? Pode colar o caminho."
+- Se houver +5: "Extrair todos de uma vez ou um por um?"
 
 ---
 
@@ -32,35 +24,28 @@ Se houver mais de 5 PDFs, perguntar: "Quer extrair todos de uma vez ou um por um
 Para cada PDF:
 
 1. Usar ferramenta de leitura para extrair texto
-2. Aplicar regex para números brasileiros:
-   - `(\+?55)?\s*\(?\d{2}\)?\s*\d{4,5}-?\d{4}`
-   - Capturar com e sem DDD
-   - Capturar com e sem formatação (parênteses, hífen, espaço)
-3. Remover números inválidos (menos de 10 dígitos)
-4. Padronizar formato: `55XXXXXXXXXXX` (com DDD, sem formatação)
+2. Regex para números brasileiros: `(\+?55)?\s*\(?\d{2}\)?\s*\d{4,5}-?\d{4}`
+3. Remover inválidos (menos de 10 dígitos)
+4. Padronizar: `55XXXXXXXXXXX`
 5. Remover duplicatas dentro do mesmo arquivo
-6. Mostrar preview: "Encontrei [N] números em [arquivo]. Primeiros 5: [lista]"
+6. Preview: "Encontrei [N] em [arquivo]"
 
 ---
 
 ### Passo 3 — Salvar
 
-Salvar em `dados/contatos/extraidos-<YYYY-MM-DD>-<sequencial>.csv`:
+`dados/contatos/extraidos-<YYYY-MM-DD>-<sequencial>.csv`:
 
 ```csv
 nome,telefone,arquivo_origem,data_extracao,chip
 ,55XXXXXXXXXXX,lista-clientes.pdf,2026-07-21,
 ```
 
-A coluna `nome` fica vazia (preenchida depois). A coluna `chip` fica vazia (vinculada no `/disparar`).
-
 ---
 
-### Passo 4 — Acumular
+### Passo 4 — Mover processados
 
-Perguntar: "Quer mover os PDFs processados pra `dados/importados/processados/` pra não reprocessar depois?"
-
-Criar a pasta se necessário.
+SE a pasta `dados/importados/` existir, mover PDFs processados para `dados/importados/processados/`. NÃO perguntar.
 
 ---
 

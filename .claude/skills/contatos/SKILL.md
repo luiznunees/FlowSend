@@ -1,57 +1,52 @@
 ---
 name: contatos
 description: >
-  Gerencia a base de contatos. Lista arquivos importados, deduplica entre listas,
-  busca contatos por nome/telefone, exporta, remove, e vincula contatos a chips manualmente.
-  Use quando o usuário disser "contatos", "gerenciar contatos", "ver lista", "/contatos".
+  Gerencia a base de contatos. Lista, deduplica, busca, exporta, remove, vincula chips.
+  ANTES de perguntar qualquer coisa, LEIA os arquivos existentes em dados/contatos/.
+  Use quando: "contatos", "gerenciar contatos", "ver lista", "vincular chip", "deduplicar", "/contatos".
 ---
 
 # /contatos — Gestão de contatos
 
-## Dependências
+## Workflow
 
-- Arquivos CSV em `dados/contatos/`
+### Passo 1 — Ler tudo antes de perguntar
+
+Carregar `dados/contatos/*.csv` e `dados/contatos/vinculos.csv`. Só então decidir.
 
 ---
 
-## Workflow
+### Passo 2 — Decidir ação sozinho
 
-### Passo 1 — Visão geral
+Regras de decisão (nesta ordem):
 
-Listar todos os arquivos em `dados/contatos/*.csv` com:
+1. **Se existem CSVs não-deduplicados** e `base-unica.csv` não existe ou está desatualizado → sugerir dedup
+2. **Se existem contatos com chip vazio** → sugerir vincular
+3. **Se o usuário pediu algo específico** → fazer
+4. **Senão** → só mostrar resumo e perguntar "O que fazer?"
+
+Resumo:
 
 ```
 Contatos totais: [N]
 Arquivos: [N]
-Última importação: [arquivo] — [N] contatos em [data]
-Contatos com chip vinculado: [N] (Chip 1: [N], Chip 2: [N])
-Contatos sem chip: [N]
+Última importação: [arquivo]
+Com chip: [N] (Chip 1: [N], Chip 2: [N])
+Sem chip: [N]
+
+➡ Sugestão: [ação automática]
 ```
 
 ---
 
-### Passo 2 — Ações
+### Passo 3 — Deduplicação
 
-Perguntar: "O que você quer fazer?"
-
-**Opções:**
-1. **Listar contatos** — mostrar N por página, buscar por nome/telefone
-2. **Deduplicar** — varrer todos CSVs, remover telefones repetidos entre listas, gerar `dados/contatos/base-unica.csv`
-3. **Vincular chip** — vincular manualmente contatos específicos a um chip
-4. **Importar CSV** — importar arquivo CSV externo
-5. **Exportar** — exportar base completa ou filtrada
-6. **Remover** — remover contatos específicos
-
----
-
-### Passo 3 — Deduplicação (quando solicitado)
-
-1. Carregar todos CSVs de `dados/contatos/`
+1. Carregar todos CSVs
 2. Agrupar por telefone
-3. Se mesmo telefone aparecer em múltiplos arquivos, manter o registro mais antigo
-4. Se mesmo telefone tiver chip vinculado em um e vazio em outro, manter o vinculado
-5. Gerar `dados/contatos/base-unica.csv` com desduplicação
-6. Mostrar: "Duplicatas encontradas: [N]. Base única gerada com [N] contatos."
+3. Mesmo telefone em múltiplos: manter o mais antigo
+4. Com chip vinculado vs sem: manter o vinculado
+5. Gerar `dados/contatos/base-unica.csv`
+6. "Duplicatas removidas: [N]. Base única: [N] contatos."
 
 ---
 
@@ -59,11 +54,10 @@ Perguntar: "O que você quer fazer?"
 
 Para vincular manualmente:
 
-1. Buscar contato por telefone ou nome
-2. Mostrar contato encontrado
-3. Perguntar: "Vincular a qual chip? (1 ou 2)"
-4. Atualizar CSV com chip definido
-5. Registrar em `dados/contatos/vinculos.csv`:
+1. Buscar contato (telefone ou nome)
+2. Mostrar resultado
+3. "Vincular a qual chip?"
+4. Atualizar CSV + `dados/contatos/vinculos.csv`:
 
 ```csv
 telefone,chip,data_vinculo,origem
@@ -74,12 +68,12 @@ telefone,chip,data_vinculo,origem
 
 ### Passo 5 — Auto-vinculação
 
-Ao disparar, contatos sem chip recebem o chip que tiver menor carga no momento. O vínculo fica registrado e nunca mais muda.
+Ao disparar, contatos sem chip recebem o chip de menor carga. O vínculo nunca mais muda.
 
 ---
 
 ## Regras
 
-- Um contato vinculado a um chip NUNCA troca automaticamente
-- Deduplicação nunca remove o vínculo de chip existente
-- Ao importar CSV, validar formato do telefone antes de salvar
+- Contato vinculado NUNCA troca automaticamente
+- Dedup nunca remove vínculo existente
+- Validar formato do telefone ao importar

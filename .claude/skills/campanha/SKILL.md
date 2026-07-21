@@ -1,88 +1,81 @@
 ---
 name: campanha
 description: >
-  Cria e gerencia campanhas de disparo. Define nome, template de mensagem,
-  lista de contatos alvo, chip (ou automático), agendamento. Salva em campanhas/.
-  Use quando o usuário disser "criar campanha", "nova campanha", "agendar disparo", "/campanha".
+  Cria campanha de disparo. ANTES de perguntar, LEIA contatos, vínculos, campanhas anteriores.
+  Monte uma proposta completa e peça confirmação. Use quando: "criar campanha", "nova campanha",
+  "agendar disparo", "/campanha".
 ---
 
 # /campanha — Criação de campanha
 
-## Dependências
-
-- Lista de contatos em `dados/contatos/`
-- Arquivo de vínculos em `dados/contatos/vinculos.csv`
-
----
-
 ## Workflow
 
-### Passo 1 — Nome da campanha
+### Passo 1 — Ler contexto primeiro
 
-"Qual o nome dessa campanha? (ex: Black Friday 2026, Follow-up leads site)"
+Carregar:
+- `dados/contatos/` — listas disponíveis, totais
+- `dados/contatos/vinculos.csv` — chips em uso
+- `campanhas/` — campanhas anteriores (para inferir padrões)
+- `_memoria/config.yaml` — chips do sistema
 
-### Passo 2 — Mensagem
+---
 
-"Qual a mensagem que vai ser enviada? Pode digitar o texto aqui."
+### Passo 2 — Propor campanha completa
 
-Suporta variáveis:
-- `{nome}` — nome do contato (se disponível no CSV)
-- `{empresa}` — empresa do contato
+Com base no contexto, monte UMA proposta. Use defaults inteligentes:
 
-Exemplo:
+| Campo | Default |
+|-------|---------|
+| Nome | "Campanha [data]" (ou última campanha +1) |
+| Mensagem | Deixe o USUÁRIO digitar (única pergunta inevitável) |
+| Lista alvo | `base-unica.csv` se existir, senão o CSV mais recente |
+| Roteamento | Automático (respeitar vínculos existentes) |
+| Agendamento | Agora |
+
+Apresentar:
+
 ```
-Olá {nome}, tudo bem? 
-Aqui é [seu nome] da [sua empresa].
-Vi que você tem interesse em [assunto]...
+? Proposta de campanha
+
+Nome:    [nome sugerido]
+Lista:   [arquivo] — [N] contatos
+Chip:    Automático (Chip 1: [N] | Chip 2: [N] | sem chip: [N])
+Quando:  Agora
+
+Mensagem precisa ser digitada.
+
+1. Aceitar proposta e digitar mensagem
+2. Alterar nome
+3. Escolher outro CSV
+4. Mudar roteamento/agendamento
+5. Cancelar
 ```
 
-Validar: a mensagem deve ser clara e não parecer spam. Se parecer, sugerir ajustes.
+---
+
+### Passo 3 — Mensagem
+
+Se aceitou a proposta: "Qual o texto da mensagem?"
+
+Suporta `{nome}` e `{empresa}`.
+
+Se o texto parecer spam, sugerir ajustes.
 
 ---
 
-### Passo 3 — Lista alvo
+### Passo 4 — Salvar
 
-"Qual lista de contatos usar?"
-
-Listar CSVs disponíveis em `dados/contatos/`:
-1. Base única (`base-unica.csv`)
-2. Arquivo específico
-3. Filtrar por chip (Chip 1, Chip 2, ou todos)
-
----
-
-### Passo 4 — Roteamento
-
-"Como definir o chip?"
-
-1. **Automático** — respeita vínculos existentes; contatos sem chip são distribuídos para equilibrar carga
-2. **Chip específico** — força todos os disparos por um chip (exceto contatos vinculados ao outro — esses não podem ser forçados)
-
----
-
-### Passo 5 — Agendamento
-
-"Quer disparar agora ou agendar?"
-
-1. Agora
-2. Agendar para data/hora específica
-3. Agendar em lotes (ex: 100 contatos por dia)
-
----
-
-### Passo 6 — Salvar
-
-Salvar em `campanhas/<slug-da-campanha>-<YYYY-MM-DD>.md`:
+`campanhas/<slug>-<YYYY-MM-DD>.md`:
 
 ```markdown
 # Campanha: [Nome]
 *Criada em [data]*
 
-## Configuração
-- **Lista alvo:** [arquivo.csv] ([N] contatos)
+## Config
+- **Lista:** [arquivo.csv] ([N] contatos)
 - **Roteamento:** [automático | chip específico]
 - **Agendamento:** [agora | data]
-- **Intervalo:** [N] segundos
+- **Intervalo:** [N]s
 
 ## Template
 ```
@@ -90,11 +83,5 @@ Salvar em `campanhas/<slug-da-campanha>-<YYYY-MM-DD>.md`:
 ```
 
 ## Status
-? Criada — aguardando disparo
+Criada — aguardando disparo
 ```
-
----
-
-### Passo 7 — Próximo passo
-
-"Campanha criada! Quer disparar agora com `/disparar` ou ajustar mais alguma coisa?"
