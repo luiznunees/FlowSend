@@ -74,6 +74,7 @@ FlowSend/
   dados/
     importados/          PDFs para extrair
     contatos/            Listas de contatos (CSV)
+  scripts/               Scripts PowerShell utilitários
   campanhas/             Campanhas criadas
-  logs/                  Histórico de disparos
+  logs/                  Histórico de disparos + progresso
 ```

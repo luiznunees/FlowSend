@@ -1,1 +1,96 @@
----name: campanhadescription: >  Cria e gerencia campanhas de disparo. Define nome, template de mensagem,  lista de contatos alvo, chip (ou autom+ítico), agendamento. Salva em campanhas/.  Use quando o usu+írio disser "criar campanha", "nova campanha", "agendar disparo", "/campanha".---# /campanha ÔÇö Cria+º+úo de campanha## Depend+¬ncias- Lista de contatos em `dados/contatos/`- Arquivo de v+¡nculos em `dados/contatos/vinculos.csv`---## Workflow### Passo 1 ÔÇö Nome da campanha"Qual o nome dessa campanha? (ex: Black Friday 2026, Follow-up leads site)"### Passo 2 ÔÇö Mensagem"Qual a mensagem que vai ser enviada? Pode digitar o texto aqui."Suporta vari+íveis:- `{nome}` ÔÇö nome do contato (se dispon+¡vel no CSV)- `{empresa}` ÔÇö empresa do contatoExemplo:```Ol+í {nome}, tudo bem? Aqui +® [seu nome] da [sua empresa].Vi que voc+¬ tem interesse em [assunto]...```Validar: a mensagem deve ser clara e n+úo parecer spam. Se parecer, sugerir ajustes.---### Passo 3 ÔÇö Lista alvo"Qual lista de contatos usar?"Listar CSVs dispon+¡veis em `dados/contatos/`:1. Base +¦nica (`base-unica.csv`)2. Arquivo espec+¡fico3. Filtrar por chip (Chip 1, Chip 2, ou todos)---### Passo 4 ÔÇö Roteamento"Como definir o chip?"1. **Autom+ítico** ÔÇö respeita v+¡nculos existentes; contatos sem chip s+úo distribu+¡dos para equilibrar carga2. **Chip espec+¡fico** ÔÇö for+ºa todos os disparos por um chip (exceto contatos vinculados ao outro ÔÇö esses n+úo podem ser for+ºados)---### Passo 5 ÔÇö Agendamento"Quer disparar agora ou agendar?"1. Agora2. Agendar para data/hora espec+¡fica3. Agendar em lotes (ex: 100 contatos por dia)---### Passo 6 ÔÇö SalvarSalvar em `campanhas/<slug-da-campanha>-<YYYY-MM-DD>.md`:```markdown# Campanha: [Nome]*Criada em [data]*## Configura+º+úo- **Lista alvo:** [arquivo.csv] ([N] contatos)- **Roteamento:** [autom+ítico | chip espec+¡fico]- **Agendamento:** [agora | data]- **Intervalo:** [N] segundos## Template```[mensagem]```## Status? Criada ÔÇö aguardando disparo```---### Passo 7 ÔÇö Pr+¦ximo passo"Campanha criada! Quer disparar agora com `/disparar` ou ajustar mais alguma coisa?"
+ï»¿---
+name: campanha
+description: >
+  Cria e gerencia campanhas de disparo. Pergunte nome, template, lista, chip,
+  agendamento. Se tiver imagem, comprima automaticamente. Salva em campanhas/.
+  Use quando: "criar campanha", "nova campanha", "agendar disparo", "/campanha".
+---
+
+# /campanha â€” CriaÃ§Ã£o de campanha
+
+## Workflow
+
+### Passo 1 â€” Nome
+
+"Qual o nome dessa campanha?"
+
+### Passo 2 â€” Mensagem
+
+"Qual a mensagem? Pode digitar."
+
+Use APENAS `{nome}` (sem espaÃ§o apÃ³s a chave). O script de disparo substitui `{nome}` pelo nome do lead. Se usar `{ nome}` com espaÃ§o, a substituiÃ§Ã£o NÃƒO funciona.
+
+Exemplo correto:
+```
+OlÃ¡ {nome}, tudo bem? Aqui Ã© da ImobiliÃ¡ria Casa Mar...
+```
+
+Exemplo ERRADO (nÃ£o funciona):
+```
+OlÃ¡ { nome}, tudo bem?   # â† espaÃ§o depois de { quebra a substituiÃ§Ã£o
+```
+
+Validar: clara, sem parecer spam.
+
+### Passo 3 â€” Lista
+
+"Qual lista de contatos?"
+
+CSVs em `dados/contatos/`:
+1. Base Ãºnica
+2. Arquivo especÃ­fico
+3. Filtrar por chip
+
+### Passo 4 â€” Roteamento
+
+"Como definir o chip?"
+1. AutomÃ¡tico
+2. Chip especÃ­fico
+
+### Passo 5 â€” Agendamento
+
+"Quando disparar?"
+1. Agora
+2. Data/hora
+3. Em lotes
+
+### Passo 6 â€” MÃ­dia (opcional)
+
+"Quer incluir uma foto ou imagem?"
+
+Se sim:
+1. Pedir o arquivo
+2. **Comprimir automaticamente** â€” se for PNG/JPG maior que 500KB, usar Python para redimensionar (mÃ¡x 800px) e salvar como JPEG qualidade 70
+3. Salvar em `campanhas/midia/<slug>/`
+4. Atualizar campanha com `midia: caminho`
+
+### Passo 7 â€” Salvar
+
+`campanhas/<slug>-<YYYY-MM-DD>.md`:
+
+```markdown
+# Campanha: [Nome]
+*Criada em [data]*
+
+## ConfiguraÃ§Ã£o
+- **Lista:** [arquivo.csv] ([N] contatos)
+- **Roteamento:** [automÃ¡tico]
+- **Agendamento:** [agora]
+- **Intervalo:** [N]s
+- **Tipo:** [texto | texto + imagem]
+- **MÃ­dia:** [caminho] (se houver)
+
+## Template
+```
+OlÃ¡ {nome}, [mensagem]
+```
+
+## Status
+Criada â€” aguardando disparo
+```
+
+IMPORTANTE: mensagem deve usar `{nome}` sem espaÃ§o. NÃ£o usar `{ nome}`.
+
+### Passo 8 â€” PrÃ³ximo
+
+"Campanha criada! Quer validar os contatos e disparar com /disparar?"

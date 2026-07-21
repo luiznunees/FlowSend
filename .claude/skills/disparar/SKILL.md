@@ -1,1 +1,152 @@
----name: disparardescription: >  Executa o disparo de uma campanha via Evolution API. L+¬ contatos, aplica roteamento  por chip (consist+¬ncia de v+¡nculo), envia mensagens com intervalo, registra resultados.  Use quando o usu+írio disser "disparar", "executar campanha", "enviar mensagens", "/disparar".---# /disparar ÔÇö Execu+º+úo de disparo via Evolution API## Depend+¬ncias- `_memoria/config.yaml` ÔÇö URL da Evolution API + inst+óncias- Campanha criada em `campanhas/`- Lista de contatos em `dados/contatos/`- V+¡nculos em `dados/contatos/vinculos.csv`---## Workflow### Passo 1 ÔÇö Carregar configLer `_memoria/config.yaml` para obter:- `evolution_api.url` ù URL do servidor Evolution API- `evolution_api.api_key` ù chave de autenticaþÒo- `chips` (id, nome, instancia)- `intervalo_segundos`---### Passo 2 ÔÇö Verificar inst+ónciasPara cada chip que vai ser usado, verificar se est+í conectado:```bashcurl -s -X GET "<URL>/instance/connectionState/<instancia>" -H "apiKey: <API_KEY>"```Se alguma estiver desconectada:> "O Chip [N] est+í desconectado. Quer conectar com /conectar-chip ou pular os contatos desse chip?"---### Passo 3 ÔÇö Selecionar campanhaListar campanhas com status "Criada ÔÇö aguardando disparo" em `campanhas/`."Qual campanha disparar?"---### Passo 4 ÔÇö Revis+úo final```Campanha: [nome]Contatos: [N]  Chip 1 (<instancia>): [N] contatos ÔÇö ? conectado  Chip 2 (<instancia>): [N] contatos ÔÇö ? conectado  Sem chip: [N] (distribuir)Intervalo: [N]sTempo estimado: [calcular]Confirmar disparo? (sim/nao)```---### Passo 5 ÔÇö DispararPara cada contato na lista:**Verificar chip:**- Se tem v+¡nculo em `vinculos.csv` ÔåÆ usar chip registrado- Se n+úo ÔåÆ atribuir chip com menos contatos ÔåÆ registrar**Preparar mensagem:**- Substituir vari+íveis (`{nome}`, `{empresa}`)- Garantir que o n+¦mero esteja no formato `55XXXXXXXXXXX`**Enviar via Evolution API:**```bashcurl -s -X POST "<URL>/message/sendText/<instancia>" -H "apiKey: <API_KEY>" \  -H "Content-Type: application/json" \  -d '{"number": "55XXXXXXXXXXX", "text": "[mensagem]", "delay": 1}'```Capturar resposta:- `{"status": "success"}` ou `{"status": 200}` ÔåÆ sucesso- Qualquer erro ÔåÆ falha**Aguardar** `intervalo_segundos`.**Registrar** em `logs/<campanha>-<YYYYMMDDHHmm>.csv`:```csvtelefone,instancia,chip_id,status,data_hora,erro55XXXXXXXXXXX,chip1,1,sucesso,2026-07-21T10:00:00,55XXXXXXXXXXX,chip2,2,erro,2026-07-21T10:00:30,instance_disconnected```**Exibir progresso:** `[N/N] ÔÇö [N] ok, [N] falha`---### Passo 6 ÔÇö Tratamento de erro| Erro | A+º+úo ||------|------|| `instance_disconnected` | Pausar chip, avisar, perguntar se quer pular contatos desse chip || `number_not_registered` | Registrar como falha, pular, continuar || `timeout` | Tentar 1x ap+¦s 30s, se falhar: pular || Qualquer outro | Registrar erro, pular, continuar |**Nunca** redirecionar contato vinculado para outro chip sem permiss+úo expl+¡cita.---### Passo 7 ÔÇö Finaliza+º+úo```? Campanha [nome] finalizadaTotal: [N] enviadosSucesso: [N]Falha: [N]Tempo total: [N] minPor chip:  Chip 1 (<instancia>): [N] disparos  Chip 2 (<instancia>): [N] disparosLog salvo em: logs/<campanha>-<data>.csv```Perguntar: "Quer gerar um relat+¦rio resumido?"
+ï»¿---
+name: disparar
+description: >
+  Executa o disparo de campanha via Evolution API. Valida contatos, salva progresso,
+  retoma de onde parou, envia em lotes. Use quando: "disparar", "executar campanha",
+  "enviar mensagens", "continuar disparo", "/disparar".
+---
+
+# /disparar â€” ExecuÃ§Ã£o de disparo via Evolution API
+
+## Workflow
+
+### Passo 1 â€” Carregar config
+
+Ler `_memoria/config.yaml`:
+- `evolution_api.url`
+- `evolution_api.api_key`
+- `chips` (id, nome, instancia)
+- `intervalo_segundos`
+
+### Passo 2 â€” Verificar instÃ¢ncias
+
+Para cada chip:
+
+```bash
+curl -s -X GET "<URL>/instance/connectionState/<instancia>" -H "apiKey: <API_KEY>"
+```
+
+Se algum desconectado: "Quer conectar com /conectar-chip ou pular esse chip?"
+
+### Passo 3 â€” Selecionar campanha
+
+Listar campanhas pendentes em `campanhas/`.
+
+- 1 pendente: selecionar automÃ¡tico
+- MÃºltiplas: perguntar
+- Nenhuma: "Criar com /campanha?"
+
+### Passo 4 â€” Verificar progresso anterior
+
+Checar `logs/<campanha>-progresso.csv`.
+
+- **Se existir**: "JÃ¡ foram enviados [N] contatos desta campanha. Quer continuar de onde parou ou comeÃ§ar do zero?"
+- **Se nÃ£o existir**: seguir normalmente
+
+### Passo 5 â€” PrÃ©-validaÃ§Ã£o automÃ¡tica
+
+"Quer validar os contatos antes de disparar? (recomendado)"
+
+Se sim, para cada contato na lista:
+
+```bash
+curl -s -X POST "<URL>/chat/whatsappNumbers/<instancia>" \
+  -H "apiKey: <API_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{"numbers": ["55XXXXXXXXXXX"]}'
+```
+
+Se `exists: false` ou erro â†’ marcar como invÃ¡lido, nÃ£o enviar.
+
+Resultado:
+```
+Total: [N] contatos
+  VÃ¡lidos (WhatsApp): [N]
+  InvÃ¡lidos: [N]
+```
+
+Salvar lista vÃ¡lida em `dados/contatos/validados-<campanha>.csv`.
+Salvar invÃ¡lidos em `dados/contatos/invalidos-<campanha>.csv`.
+
+**Importante**: perguntar se quer remover contatos especÃ­ficos antes de prosseguir.
+
+### Passo 6 â€” RevisÃ£o + Lotes
+
+```
+Campanha: [nome]
+Contatos: [N] vÃ¡lidos
+Por lote: [perguntar â€” padrÃ£o 50]
+Total de lotes: [N]
+Intervalo: [N]s entre cada mensagem
+Tempo estimado por lote: [calcular]
+```
+
+"Confirmar primeiro lote?"
+
+### Passo 7 â€” Disparar com progresso
+
+Usar `scripts/disparar-campanha.ps1` (adaptar para os parÃ¢metros):
+
+```powershell
+$campanha = "slug"
+$arquivo = "dados/contatos/validados-<campanha>.csv"
+$url = "<URL>"
+$apiKey = "<API_KEY>"
+$instancias = @("chip1", "chip2")
+$intervaloMin = 10
+$intervaloMax = 70
+$midia = "campanhas/midia/<campanha>/imagem.jpg"  # se houver
+$lote = 50  # perguntar ao usuÃ¡rio
+```
+
+O script DEVE:
+
+**a) Trocar variÃ¡veis corretamente:**
+```powershell
+$mensagem = $variacao -replace '\{nome\}', $nome -replace '\{\s*nome\}', $nome
+```
+Isso cobre tanto `{nome}` quanto `{ nome}` (com espaÃ§o).
+
+**b) Comprimir mÃ­dia automaticamente:**
+Se imagem maior que 500KB, comprimir com Python antes de enviar.
+
+**c) Salvar progresso a cada envio:**
+```csv
+# logs/<campanha>-progresso.csv
+telefone,nome,instancia,variacao,status,data_hora
+```
+
+**d) Ao finalizar o lote, parar e perguntar:**
+```
+Lote [N] concluÃ­do. [sucesso/falha]. Quer continuar com o prÃ³ximo lote?
+```
+
+**e) Se houver erro no envio, mostrar erro claro:**
+```
+[1/251] RODOLFO VOLL -> erro: 500 - imagem muito grande (2.8MB)
+```
+
+### Passo 8 â€” FinalizaÃ§Ã£o
+
+```
+? Campanha [nome] finalizada
+
+Total: [N]
+Sucesso: [N]
+Falha: [N]
+Tempo total: [N] min
+Lotes: [N]
+
+Log: logs/<campanha>-<data>.csv
+```
+
+---
+
+## Regras
+
+- Sempre verificar progresso antes de comeÃ§ar
+- PrÃ©-validaÃ§Ã£o ANTES do disparo (nÃ£o durante)
+- {nome} com ou sem espaÃ§o â€” regex cobre ambos
+- Imagens >500KB comprimir automaticamente
+- Perguntar a cada lote se quer continuar
+- Salvar progresso a cada envio para permitir resume
